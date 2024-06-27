@@ -1,7 +1,6 @@
 
 import ChecklistItem from "@/components/ChecklistItem";
 import {
-  Box,
   Button,
   ButtonIcon,
   ButtonText,
@@ -17,7 +16,7 @@ import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { clearChecked, clickItem, loadStore } from "../store/slice";
 import Drawer from "@/components/Drawer";
 import { useEffect, useState } from "react";
-import { Link, router } from 'expo-router';
+import { Link } from 'expo-router';
 import { EditIcon } from "lucide-react-native";
 import notifee from '@notifee/react-native';
 

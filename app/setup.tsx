@@ -1,23 +1,20 @@
 import {
-  Box,
   Button,
   ButtonText,
   ScrollView,
   Input,
   InputField,
   VStack,
-  Center,
   Heading,
   HStack,
   ButtonIcon
 } from "@gluestack-ui/themed";
-import { ListRenderItemInfo, StyleSheet, FlatList } from "react-native";
+import { StyleSheet } from "react-native";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
-import { ListItem, addItem, loadStore } from "../store/slice";
+import { addItem, loadStore } from "../store/slice";
 import { useEffect, useState } from "react";
 import { Link, router } from 'expo-router';
-import { Text } from "@gluestack-ui/themed";
-import NewListItem from "@/components/NewListItem";
+import DisplayListItem from "@/components/DisplayListItem";
 import { ArrowLeftIcon } from "lucide-react-native";
 
 export default function Setup() {
@@ -49,10 +46,10 @@ export default function Setup() {
       </HStack>
       <ScrollView>
         <Input variant="outline" size="md">
-          <InputField placeholder="Add new prompt here" value={inputValue} onChangeText={(text) => setInputValue(text)} onSubmitEditing={onSubmit} />
+          <InputField placeholder="Add new signal here" value={inputValue} onChangeText={(text) => setInputValue(text)} onSubmitEditing={onSubmit} />
         </Input>
         {list.map((item) => (
-          <NewListItem id={item.id} key={item.id} />
+          <DisplayListItem id={item.id} key={item.id} />
         ))}
       </ScrollView>
       <Button size="md" variant="solid" action="primary" onPress={handleDone}>

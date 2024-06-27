@@ -18,7 +18,7 @@ interface ResponseItem {
   label: string
   count: number
 }
-interface SliceState {
+export interface SliceState {
   listItems: ListItem[]
   responseItems: ResponseItem[]
 }
@@ -50,12 +50,38 @@ export const deleteItem = createAsyncThunk('app/deleteItem', async (id: string) 
 });
 
 export const editItem = createAsyncThunk('app/editItem', async (item: ListItem) => {
-  try {
+  try {    
     const jsonValue = JSON.stringify(item);
     await AsyncStorage.setItem(item.id, jsonValue);
     return item;
   } catch {
     console.log('error saving over');
+  }
+});
+
+export const addResponseItem = createAsyncThunk('app/addResponseItem', async (label: string) => {
+  const id = uuid.v4();
+  let stringId: string;
+  if (!(typeof id === 'string' || id instanceof String)) {
+    stringId = id.join().toString();
+  } else {
+    stringId = id as string;
+  }
+  try {
+    const jsonValue = JSON.stringify({ label, id: stringId });
+    await AsyncStorage.setItem(stringId, jsonValue);
+    return { label, count: 0, id: stringId };
+  } catch {
+    console.log('error saving');
+  }
+});
+
+export const deleteResponseItem = createAsyncThunk('app/deleteResponseItem', async (id: string) => {
+  try {
+    await AsyncStorage.removeItem(id);
+    return id;
+  } catch {
+    console.log('error deleting item');
   }
 });
 
@@ -67,9 +93,16 @@ export const loadStore = createAsyncThunk('app/loadStore', async () => {
     if (keys.length) {
       values = await AsyncStorage.multiGet(keys);
     }
-    const retVal: ListItem[] = [];
+    const retVal: SliceState = { listItems: [], responseItems: [] };
     values.forEach((pair) => {
-      if (pair[1]) retVal.push({ ...JSON.parse(pair[1]), checked: false });
+      if (pair[1]) {
+        const item = JSON.parse(pair[1]);
+        if (item.hasOwnProperty('responses')){
+          retVal.listItems.push({ ...item, checked: false });
+        } else {
+          retVal.responseItems.push({ ...item, count: 0 });
+        }
+      }
     });
     return retVal;
   } catch {
@@ -80,18 +113,8 @@ export const loadStore = createAsyncThunk('app/loadStore', async () => {
 export const appSlice = createSlice({
   name: 'app',
   initialState: {
-    // listItems: [
-    //   { id: '1', label: 'Head hurts', checked: false , responses: ['1'] },
-    //   { id: '2', label: 'Stomach hurts', checked: false , responses: [] },
-    //   { id: '3', label: 'Eyes hurt', checked: false , responses: ['1'] },
-    //   { id: '4', label: 'Body tense', checked: false , responses: [] },
-    //   { id: '5', label: 'Sore from sitting', checked: false , responses: [] },
-    //   { id: '6', label: 'Vibrating', checked: false , responses: [] },
-    // ],
     listItems: [],
-    responseItems: [
-      { id: '1', label: 'Put on headphones', count: 0 },
-    ],
+    responseItems: [],
   } satisfies SliceState as SliceState,
   reducers: {
     clickItem: (state, action) => {
@@ -119,12 +142,13 @@ export const appSlice = createSlice({
     builder.addCase(addItem.fulfilled, (state, action) => {
       if (action.payload) {
         const temp = state.listItems;
-        temp.push({ ...action.payload, checked: false });
+        temp.push(action.payload);
         state.listItems = temp;
       }
     }).addCase(loadStore.fulfilled, (state, action) => {
       if (action.payload) {
-        state.listItems = action.payload;
+        state.listItems = action.payload.listItems;
+        state.responseItems = action.payload.responseItems;
       }
     }).addCase(deleteItem.fulfilled, (state, action) => {
       if (action.payload) {
@@ -132,15 +156,23 @@ export const appSlice = createSlice({
       }
     }).addCase(editItem.fulfilled, (state, action) => {
       if (action.payload) {
-        const temp = state.listItems;
-        temp.map((item) => {
+        const temp = [...state.listItems].map((item) => {
           if (item.id === action.payload?.id) {
             return action.payload;
           }
           return item;
         });
         state.listItems = temp;
-        console.log(temp);
+      }
+    }).addCase(addResponseItem.fulfilled, (state, action) => {
+      if (action.payload) {
+        const temp = state.responseItems;
+        temp.push(action.payload);
+        state.responseItems = temp;
+      }
+    }).addCase(deleteResponseItem.fulfilled, (state, action) => {
+      if (action.payload) {
+        state.responseItems = state.responseItems.filter((item) => item.id !== action.payload);
       }
     });
   },
